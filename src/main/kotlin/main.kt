@@ -59,7 +59,7 @@ data class Parking(val vehicles: MutableSet<Vehicle>) {
         }
     }
 
-    fun registerVehicle(amount : Int) {
+    private fun registerVehicle(amount : Int) {
         val (vehicle,_amount) = checkoutVehiclesPair
         checkoutVehiclesPair = Pair(vehicle + 1, _amount + amount)
     }
@@ -82,7 +82,7 @@ data class Parking(val vehicles: MutableSet<Vehicle>) {
 }
 
 // Answer question one == why set is a list of data in no specific order, which cannot have duplicates
-data class Vehicle(val plate: String, val type: VehicleType, val checkIntTime: Calendar, val checkOutTime: Calendar = Calendar.getInstance(), val discountCard: String? = null,) {
+data class Vehicle(val plate: String, val type: VehicleType, val checkIntTime: Calendar, val checkOutTime: Calendar = Calendar.getInstance(), val discountCard: String? = null) {
     val parkedTime: Long
     get() = (checkOutTime.timeInMillis - checkIntTime.timeInMillis) / 60000
     // get() = (Calendar.getInstance().timeInMillis - checkIntTime.timeInMillis) / 60000
@@ -107,13 +107,13 @@ enum class VehicleType(val rate: Int) {
 }
 
 fun main() {
-    showDemo();
+    showDemo()
 }
 
 fun showDemo(){
     println("Adding vehicles...")
 
-    val vehiclesTest = mutableListOf<Vehicle>(
+    val vehiclesTest = mutableListOf(
         Vehicle("AA111AA", VehicleType.CAR, Calendar.getInstance(), discountCard = "DISCOUNT_CARD_001"), // DISCOUNT_CARD_001
         Vehicle("AA111A1", VehicleType.MOTORCYCLE, Calendar.getInstance()),
         Vehicle("AA111A2", VehicleType.BUS, Calendar.getInstance()),
