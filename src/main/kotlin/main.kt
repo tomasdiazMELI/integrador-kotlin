@@ -11,7 +11,7 @@ data class ParkingSpace(val parking: Parking) {
         val fraction = 15
         if(parkedTime > 120){
             val rest = if(time % fraction > 0 ) 1 else 0
-            total += ((time / fraction) + rest )* 5
+            total += ((time / fraction) + rest ) * 5
         }
 
         if(hasDiscountCard) {
@@ -21,12 +21,13 @@ data class ParkingSpace(val parking: Parking) {
         return total
     }
 
-    fun checkOutVehicle(plate: String, onSuccess: (Int) -> Unit, onError: () -> Unit){
-        val vehicle: Vehicle? = parking.vehicles.firstOrNull { it.plate == plate}
-        vehicle?.let{
-            parking.removeVehicle(plate)
-            onSuccess(calculateFee(it.type, it.parkedTime.toInt(), !it.discountCard.isNullOrEmpty()))
-        }.run{
+    fun checkOutVehicle(plate: String, onSuccess: (Int) -> Unit, onError: () -> Unit) {
+        val vehicle: Vehicle? = parking.vehicles.firstOrNull { it.plate == plate }
+        vehicle?.let {
+            val fee = calculateFee(it.type, it.parkedTime.toInt(), !it.discountCard.isNullOrEmpty())
+            parking.removeVehicle(plate, fee)
+            onSuccess(fee)
+        }?: run {
             onError()
         }
     }
@@ -35,7 +36,19 @@ data class ParkingSpace(val parking: Parking) {
 data class Parking(val vehicles: MutableSet<Vehicle>) {
     val maxCapacity: Int = 20
 
-    fun removeVehicle(plate: String) {
+    private var checkoutVehiclesPair: Pair<Int, Int> = Pair(0, 0)
+
+    fun listVehicles() {
+        vehicles.forEach {
+            println("Plate: ${it.plate}")
+        }
+    }
+
+    fun showEarn(){
+        println("${checkoutVehiclesPair.first} vehicles have checked out and have earnings of $${checkoutVehiclesPair.second}")
+    }
+
+    fun removeVehicle(plate: String, fee: Int) {
         val vehicle : Vehicle? = vehicles.firstOrNull { it.plate == plate}
 
         vehicle?.let{
@@ -66,10 +79,11 @@ data class Parking(val vehicles: MutableSet<Vehicle>) {
 
 }// Se define como set para no almacenar vehiculos con la misma placa
 
-data class Vehicle(val plate: String, val type: VehicleType, val checkIntTime: Calendar, val discountCard: String? = null) {
-
+// Answer question one == why set is a list of data in no specific order, which cannot have duplicates
+data class Vehicle(val plate: String, val type: VehicleType, val checkIntTime: Calendar, val checkOutTime: Calendar = Calendar.getInstance(), val discountCard: String? = null,) {
     val parkedTime: Long
-    get() = (Calendar.getInstance().timeInMillis - checkIntTime.timeInMillis) / 60000
+    get() = (checkOutTime.timeInMillis - checkIntTime.timeInMillis) / 60000
+    // get() = (Calendar.getInstance().timeInMillis - checkIntTime.timeInMillis) / 60000
     // Function states that two Vehicles are equal if plates are equal.
     override fun equals(other: Any?): Boolean {
         if(other is Vehicle) {
@@ -91,23 +105,33 @@ enum class VehicleType(val rate: Int) {
 }
 
 fun main() {
+    var checkOutTime: Calendar = Calendar.getInstance()
+    var checkInTime: Calendar = Calendar.getInstance()
+
+    checkInTime.set(2021, 10, 26, 18,0)
+    checkOutTime.set(2021, 10, 26, 20,0)
+
+
     var vehiclesTest = listOf<Vehicle>(
-        Vehicle("AA111AA", VehicleType.CAR, Calendar.getInstance(), "DISCOUNT_CARD_001"),
-        Vehicle("AA111A1", VehicleType.MOTORCYCLE, Calendar.getInstance(), "DISCOUNT_CARD_002"),
-        Vehicle("AA111A2", VehicleType.BUS, Calendar.getInstance(), "DISCOUNT_CARD_003"),
-        Vehicle("AA111A3", VehicleType.MINIBUS, Calendar.getInstance(), "DISCOUNT_CARD_004"),
-        Vehicle("AA111A4", VehicleType.CAR, Calendar.getInstance(), "DISCOUNT_CARD_005"),
-        Vehicle("AA111A5", VehicleType.CAR, Calendar.getInstance(), "DISCOUNT_CARD_006"),
+        Vehicle("AA111AA", VehicleType.CAR, checkInTime, checkOutTime), // DISCOUNT_CARD_001
+        Vehicle("AA111A1", VehicleType.MOTORCYCLE, Calendar.getInstance()),
+        Vehicle("AA111A2", VehicleType.BUS, Calendar.getInstance() ),
+        Vehicle("AA111A3", VehicleType.MINIBUS, Calendar.getInstance()) ,
+        Vehicle("AA111A4", VehicleType.CAR, Calendar.getInstance()) ,
+        Vehicle("AA111A5", VehicleType.CAR, Calendar.getInstance() ),
         )
 
 
-    //val parking = Parking(mutableSetOf())
-    val parkingSpace = ParkingSpace(Parking(mutableSetOf()))
+    val parking = Parking(mutableSetOf())
+    val parkingSpace = ParkingSpace(parking)
     vehiclesTest.forEach {parkingSpace.checkIn(it)}
 
-    var lala = vehiclesTest.firstOrNull()
+    var lala = vehiclesTest.first()
 
-    parkingSpace.checkOutVehicle(lala.plate, )
+    parkingSpace.checkOutVehicle(lala.plate, ::onSuccess, ::onError)
+    // parking.listVehicles()
+    //parking.showEarn()
+
 
 //    val car = Vehicle("AA111AA", VehicleType.CAR, Calendar.getInstance(), "DISCOUNT_CARD_001")
 //    val moto = Vehicle("B222BBB", VehicleType.MOTORCYCLE, Calendar.getInstance())
@@ -116,3 +140,9 @@ fun main() {
 
     // val parking = Parking(mutableSetOf(car, moto, minibus, bus))
 }
+
+fun onSuccess(x: Int) =
+    println("Your fee is $$x. Come back soon.")
+
+fun onError() =
+    println("Sorry, the check-out failed")
