@@ -28,11 +28,8 @@ data class ParkingSpace(val parking: Parking) {
             onSuccess(calculateFee(it.type, it.parkedTime.toInt(), !it.discountCard.isNullOrEmpty()))
         }.run{
             onError()
-
         }
     }
-
-    fun onSuccess(){}
 }
 
 data class Parking(val vehicles: MutableSet<Vehicle>) {
@@ -42,8 +39,14 @@ data class Parking(val vehicles: MutableSet<Vehicle>) {
         val vehicle : Vehicle? = vehicles.firstOrNull { it.plate == plate}
 
         vehicle?.let{
-            vehicles.remove(vehicle)
+            vehicles.remove(it)
+            registerVehicle(fee)
         }
+    }
+
+    fun registerVehicle(amount : Int) {
+        val (vehicle,_amount) = checkoutVehiclesPair
+        checkoutVehiclesPair = Pair(vehicle + 1, _amount + amount)
     }
 
     fun addVehicle(vehicle: Vehicle): Boolean{
@@ -60,6 +63,7 @@ data class Parking(val vehicles: MutableSet<Vehicle>) {
 
         return response
     }
+
 }// Se define como set para no almacenar vehiculos con la misma placa
 
 data class Vehicle(val plate: String, val type: VehicleType, val checkIntTime: Calendar, val discountCard: String? = null) {
