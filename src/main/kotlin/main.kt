@@ -5,7 +5,8 @@ data class ParkingSpace(val parking: Parking) {
     fun checkIn(vehicle: Vehicle){
         parking.addVehicle(vehicle)
     }
-    fun calculateFee(type: VehicleType, parkedTime: Int, hasDiscountCard: Boolean): Int {
+
+    private fun calculateFee(type: VehicleType, parkedTime: Int, hasDiscountCard: Boolean): Int {
         var total = type.rate
         val time = parkedTime - 120
         val fraction = 15
@@ -33,8 +34,9 @@ data class ParkingSpace(val parking: Parking) {
     }
 }
 
+// Set because we do not want to store vehicles with the same license plate
 data class Parking(val vehicles: MutableSet<Vehicle>) {
-    val maxCapacity: Int = 20
+    private val maxCapacity: Int = 20
 
     private var checkoutVehiclesPair: Pair<Int, Int> = Pair(0, 0)
 
@@ -44,7 +46,7 @@ data class Parking(val vehicles: MutableSet<Vehicle>) {
         }
     }
 
-    fun showEarn(){
+    fun showEarnings(){
         println("${checkoutVehiclesPair.first} vehicles have checked out and have earnings of $${checkoutVehiclesPair.second}")
     }
 
@@ -77,7 +79,7 @@ data class Parking(val vehicles: MutableSet<Vehicle>) {
         return response
     }
 
-}// Se define como set para no almacenar vehiculos con la misma placa
+}
 
 // Answer question one == why set is a list of data in no specific order, which cannot have duplicates
 data class Vehicle(val plate: String, val type: VehicleType, val checkIntTime: Calendar, val checkOutTime: Calendar = Calendar.getInstance(), val discountCard: String? = null,) {
@@ -105,40 +107,59 @@ enum class VehicleType(val rate: Int) {
 }
 
 fun main() {
-    var checkOutTime: Calendar = Calendar.getInstance()
-    var checkInTime: Calendar = Calendar.getInstance()
+    showDemo();
+}
 
-    checkInTime.set(2021, 10, 26, 18,0)
-    checkOutTime.set(2021, 10, 26, 20,0)
+fun showDemo(){
+    println("Adding vehicles...")
 
-
-    var vehiclesTest = listOf<Vehicle>(
-        Vehicle("AA111AA", VehicleType.CAR, checkInTime, checkOutTime), // DISCOUNT_CARD_001
+    val vehiclesTest = mutableListOf<Vehicle>(
+        Vehicle("AA111AA", VehicleType.CAR, Calendar.getInstance(), discountCard = "DISCOUNT_CARD_001"), // DISCOUNT_CARD_001
         Vehicle("AA111A1", VehicleType.MOTORCYCLE, Calendar.getInstance()),
-        Vehicle("AA111A2", VehicleType.BUS, Calendar.getInstance() ),
-        Vehicle("AA111A3", VehicleType.MINIBUS, Calendar.getInstance()) ,
-        Vehicle("AA111A4", VehicleType.CAR, Calendar.getInstance()) ,
-        Vehicle("AA111A5", VehicleType.CAR, Calendar.getInstance() ),
-        )
-
+        Vehicle("AA111A2", VehicleType.BUS, Calendar.getInstance()),
+        Vehicle("AA111A3", VehicleType.MINIBUS, Calendar.getInstance()),
+        Vehicle("AA111A4", VehicleType.CAR, Calendar.getInstance()),
+        Vehicle("AA111A5", VehicleType.MOTORCYCLE, Calendar.getInstance()),
+        Vehicle("AA111A6", VehicleType.BUS, Calendar.getInstance()),
+        Vehicle("AA111A7", VehicleType.MINIBUS, Calendar.getInstance()),
+        Vehicle("AA111A8", VehicleType.CAR, Calendar.getInstance()),
+        Vehicle("AA111A9", VehicleType.MOTORCYCLE, Calendar.getInstance()),
+        Vehicle("AA111A10", VehicleType.BUS, Calendar.getInstance()),
+        Vehicle("AA111A11", VehicleType.MINIBUS, Calendar.getInstance()),
+        Vehicle("AA111A12", VehicleType.CAR, Calendar.getInstance()),
+        Vehicle("AA111A13", VehicleType.MOTORCYCLE, Calendar.getInstance()),
+        Vehicle("AA111A14", VehicleType.BUS, Calendar.getInstance()),
+        Vehicle("AA111A16", VehicleType.CAR, Calendar.getInstance()),
+        Vehicle("AA111A17", VehicleType.CAR, Calendar.getInstance()),
+        Vehicle("AA111A18", VehicleType.CAR, Calendar.getInstance()),
+        Vehicle("AA111A19", VehicleType.CAR, Calendar.getInstance()),
+        Vehicle("AA111A20", VehicleType.CAR, Calendar.getInstance())
+    )
 
     val parking = Parking(mutableSetOf())
     val parkingSpace = ParkingSpace(parking)
     vehiclesTest.forEach {parkingSpace.checkIn(it)}
 
-    var lala = vehiclesTest.first()
+    println("\nTest: Error Max Capacity")
+    parkingSpace.checkIn(Vehicle("AA111A30", VehicleType.MINIBUS, Calendar.getInstance()))
 
-    parkingSpace.checkOutVehicle(lala.plate, ::onSuccess, ::onError)
-    // parking.listVehicles()
-    //parking.showEarn()
+    println("\nTest: Plate error")
+    parkingSpace.checkIn(Vehicle("AA111A20", VehicleType.MINIBUS, Calendar.getInstance()))
 
+    println("\nTest: Success check-out")
+    parkingSpace.checkOutVehicle("AA111A4", ::onSuccess, ::onError)
 
-//    val car = Vehicle("AA111AA", VehicleType.CAR, Calendar.getInstance(), "DISCOUNT_CARD_001")
-//    val moto = Vehicle("B222BBB", VehicleType.MOTORCYCLE, Calendar.getInstance())
-//    val minibus = Vehicle("CC333CC", VehicleType.MINIBUS, Calendar.getInstance())
-//    val bus = Vehicle("DD444DD", VehicleType.BUS, Calendar.getInstance(), "DISCOUNT_CARD_002")
+    println("\nTest: Error check-out")
+    parkingSpace.checkOutVehicle("AA111A4", ::onSuccess, ::onError)
 
-    // val parking = Parking(mutableSetOf(car, moto, minibus, bus))
+    println("\nTest: Check-out with discount card")
+    parkingSpace.checkOutVehicle("AA111AA", ::onSuccess, ::onError)
+
+    println("\nTest: Show all vehicles in the parking")
+    parking.listVehicles()
+
+    println("\nTest: Show earnings")
+    parking.showEarnings()
 }
 
 fun onSuccess(x: Int) =
